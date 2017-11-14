@@ -1,0 +1,69 @@
+{
+    "timeOut": 10,
+    "mapList": [
+        {
+            "mapName": "lockdown",
+            "mapCode": "mp_alpha"
+        },
+        {
+            "mapName": "bootleg",
+            "mapCode": "mp_bootleg"
+        },
+        {
+            "mapName": "mission",
+            "mapCode": "mp_bravo"
+        },
+        {
+            "mapName": "lockdown",
+            "mapCode": "mp_alpha"
+        },
+        {
+            "mapName": "dome",
+            "mapCode": "mp_dome"
+        },
+        {
+            "mapName": "downturn",
+            "mapCode": "mp_exchange"
+        },
+        {
+            "mapName": "hardhat",
+            "mapCode": "mp_hardhat"
+        },
+        {
+            "mapName": "interchange",
+            "mapCode": "mp_interchange"
+        },
+        {
+            "mapName": "fallen",
+            "mapCode": "mp_lambeth"
+        },
+        {
+            "mapName": "bakaara",
+            "mapCode": "mp_mogadishu"
+        },
+        {
+            "mapName": "resistance",
+            "mapCode": "mp_paris"
+        },
+        {
+            "mapName": "arkaden",
+            "mapCode": "mp_plaza2"
+        },
+        {
+            "mapName": "outpost",
+            "mapCode": "mp_radar"
+        },
+        {
+            "mapName": "seatown",
+            "mapCode": "mp_seatown"
+        },
+        {
+            "mapName": "underground",
+            "mapCode": "mp_underground"
+        },
+        {
+            "mapName": "village",
+            "mapCode": "mp_village"
+        }
+    ]
+}
