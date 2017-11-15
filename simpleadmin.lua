@@ -21,25 +21,25 @@ consoleName = "^0[^:Pluto^0]:^7 "
 -- commands
 function votemap_f(sender,args)
 		if isEmpty(args[2]) then
-			sender:iPrintLnBold("^;Useage: !votemap <mapname> ")
-			return true
+			sender:iPrintLnBold("^;Usage: !vm <mapname> ")
+			return
 		end
 
 		if votingmap == "empty" then
-			local tmp = args[2]
+			local tmp = args[2]:lower()
 			tmp = getMapCode(tmp)
 
 			if not isEmpty(tmp) then
 				if tmp == gsc.getdvar("mapname") then
 					sender:iPrintLnBold("^3Warning: The current map is ^2" .. args[2] .. " ^3already!")
-					return true;
+					return
 				end
 				voteyes = 1
 				votingmap = tmp
 				votedplayernum = 1
 				votedplayer[0] = sender.name
 				sayAll("^;" .. sender.name .. " ^3want change map to ^2" .. args[2])
-				sayAll("Say ^4!yes ^7to vote yes,say ^4!no ^7to vote no.")
+				sayAll("Say ^4!y ^7to vote yes,say ^4!n ^7to vote no.")
 			else
 				sender:iPrintLnBold("^1Error: ^2" .. args[2] .. " ^1is not a vaild map!")
 			end
@@ -52,7 +52,7 @@ function voteyes_f(sender,args)
 	if votingmap ~= "empty" then
 		if isPlayerVoted(sender.name) then
 			sender:iPrintLnBold("^1Error: You already voted!")
-			return true;
+			return
 		end
 		voteyes = voteyes + 1
 		votedplayer[votedplayernum] = sender.name
@@ -65,7 +65,7 @@ function voteno_f(sender,args)
 	if votingmap ~= "empty" then
 		if isPlayerVoted(sender.name) then
 			sender:iPrintLnBold("^1Error: You already voted!")
-			return true;
+			return
 		end
 		voteno = voteno + 1
 		votedplayer[votedplayernum] = sender.name
@@ -75,13 +75,22 @@ function voteno_f(sender,args)
 end
 
 function help_f(sender,args)
+	local level = 0
+	for i,player in pairs(users.users) do
+		if player["name"] == player.name and player["guid"] == sender:getguid() then
+			level = player["level"]
+		end
+	end
+
 	local i = 1
 	for cmd_n,cmd in pairs(commands) do
 		sayTo(sender,"Commands on this server:")
-		callbacks.afterDelay.add(750 * i,function ()
-			sayTo(sender,("^2!%s^3: %s"):format(cmd_n,cmd[1]))
-		end)
-		i = i + 1
+		if cmd[3] <= level and cmd[3] ~= -1 then
+			callbacks.afterDelay.add(750 * i,function ()
+				sayTo(sender,("^2!%s^3: %s"):format(cmd_n,cmd[1]))
+			end)
+			i = i + 1
+		end
 	end
 end
 
@@ -91,19 +100,114 @@ function suicide_f(sender,args)
 	end)
 end
 
+function writeusers_f(sender,args)
+	writeUsers()
+end
+
+function iamgod_f(sender,args)
+	for i,player in pairs(users.users) do
+		if player["level"] == 100 then
+			sender:iPrintLnBold("^1Error: YOU ARE NOT THE GOD!")
+			print(("Warning: %s [Guid:%s] is trying to be a owner"):format(sender.name,sender:getguid()))
+			return
+		end
+	end
+
+	for i,player in pairs(users.users) do
+		if player["name"] == player.name and player["guid"] == sender:getguid() then
+			sender:iPrintLnBold("^2You are the god now!")
+			users.users[i]["level"] = 100
+			writeUsers()
+		end
+	end
+end
+
+function setalias_f(sender,args)
+	if isEmpty(args[2]) then
+		sender:iPrintLnBold("^;Usage: !alias <Your New Alias> ")
+		return
+	end
+
+	for i,player in pairs(users.users) do
+		if player["name"] == player.name and player["guid"] == sender:getguid() then
+			users.users[i]["alias"] = args[2]
+			writeUsers()
+		end
+	end
+end
+
+function setrank_f(sender,args)
+	for i,player in pairs(users.users) do
+		if player["name"] == sender.name and player["guid"] == sender:getguid() and player["level"] >= 100 then
+			if isEmpty(args[2]) or isEmpty(args[3])then
+				sender:iPrintLnBold("^;Usage: !setrank <New Rank (0 to 100)> <Player name>")
+				return
+			end
+			local trank = tonumber(args[2])
+			print(trank)
+			if trank == nil or trank > 100 or trank < 0 then
+				sender:iPrintLnBold(("^1Error: %s is not a vaild rank!"):format(args[2]))
+				return
+			end
+
+			local playername = args[3]
+			local i = 4
+			while args[i] ~= nil do
+				playername = playername .. " " .. args[i]
+				i = i + 1
+			end
+
+			if playername:lower() == sender.name:lower() then
+				sender:iPrintLnBold("^1Error: Target player is yourself!")
+				return
+			end
+
+			local tplayer = nil
+			-- callbacks.afterDelay.add(0,function()
+				for player in util.iterPlayers() do
+					if player.name:lower() == playername:lower() then
+						tplayer = player
+					end
+				end
+			-- end)	
+
+			if tplayer ~= nil then
+				for i,player in pairs(users.users) do
+					if player["name"]:lower() == playername:lower() and player["guid"] == tplayer:getguid() then
+						users.users[i]["level"] = trank
+						writeUsers()
+						sender:iPrintLnBold(("^;Player %s's rank is set to %s!"):format(player["name"],args[2]))
+						sayTo(tplayer,("^2Your rank is %s now!"):format(args[2]))
+						return
+					end
+				end
+			end
+
+			sender:iPrintLnBold(("^1Error: Theres are no player called: %s!"):format(playername))
+		else
+			sender:iPrintLnBold("^1Error: You are not the owner of this server!")
+		end
+	end
+end
+
 -- commands end
 
 -- The command in add command will call as cmd_f(sender,args)
-function addCommand(cmd_n,cmd_h,cmd_f)
-	commands[cmd_n] = { cmd_h , cmd_f }
+function addCommand(cmd_n,cmd_h,cmd_f,cmd_l)
+	commands[cmd_n] = { cmd_h , cmd_f , cmd_l}
 end
 
 function InitCmds()
-	addCommand("sc","Kill your self", suicide_f )
-	addCommand("vm","Vote to change map",votemap_f)
-	addCommand("y","Vote yes",voteyes_f)
-	addCommand("n","Vote no",voteno_f)
-	addCommand("help","Print command list.",help_f)
+	---------- CMD_N		CMD_H							CMD_F 				CMD_L ---------
+	addCommand("sc"			,"Kill your self"				, suicide_f 		,0 	)
+	addCommand("vm"			,"Vote to change map"			, votemap_f			,0 	)
+	addCommand("y"			,"Vote yes"						, voteyes_f			,0	)
+	addCommand("n"			,"Vote no"						, voteno_f			,0	)
+	addCommand("help"		,"Print command list."			, help_f			,0	)
+	addCommand("alias"		,"Set your alias"				, setalias_f		,0	)
+	addCommand("iamgod"		,"Be a god"						, iamgod_f			,-1	)
+	addCommand("setrank"	,"Set a rank of someone."		, setrank_f			,100)
+-- 	addCommand("wu"			,""								, writeusers_f	)
 end
 
 function readConfig()
@@ -114,6 +218,7 @@ function readConfig()
 		config = json.decode(jsonstr)
 		timeout = config["timeOut"]
 		mapList = config["mapList"]
+		consoleName = config["prefix"]
 		file:close()
 	else
 		local file = io.open(configFile,"w")
@@ -126,6 +231,7 @@ function readConfig()
 		timeout = config["timeOut"]
 		mapList = config["mapList"]
 		admins = config["admins"]
+		consoleName = config["prefix"]
 		file:close()
 	end
 
@@ -152,16 +258,16 @@ function readUsers()
 end
 
 function addUser(player)
-	local num = 1
-	for i,player in pairs(users) do
-		num = num + 1
+	if users.users == nil then
+        users.users = {}
 	end
+	
 	local playerinfo = {}
-	playerinfo["name"] = player.name
-	playerinfo["guid"] = player:getguid()
-	playerinfo["admin"] = 0
-	playerinfo["alias"] = ""
-	users[num + 1] = playerinfo
+	playerinfo["name"]		= player.name
+	playerinfo["guid"]		= player:getguid()
+	playerinfo["level"]		= 0
+	playerinfo["alias"] 	= ""
+	table.insert( users.users , playerinfo)
 end
 --
 
@@ -175,10 +281,6 @@ function fileExists(name)
 	end
  end
 
- function sayTo(player,msg)
-	player:tell(consoleName .. msg)
- end
-
 function getMapCode(input)
 	for i,map in pairs(mapList) do
 		if map["mapName"] == input or map["mapCode"] == input then 
@@ -189,14 +291,39 @@ function getMapCode(input)
 end
 
 function isAdmin(name,guid)
-	for i,player in pairs(users) do
-		if player["name"] == name and player["guid"] == guid and player["admin"] == 1 then
+	if users.users == nil then
+		return false
+	end
+
+	for i,player in pairs(users.users) do
+		if player["name"] == name and player["guid"] == guid and player["level"] > 40 then
 			return true
 		end
 	end
 	return false
 end
 
+function getAlias(name,guid)
+	for i,player in pairs(users.users) do
+		if player["name"] == name and player["guid"] == guid and player["alias"] ~= "" then
+			return player["alias"]
+		end
+	end
+
+	return nil
+end
+
+function sayAs(name,msg)
+	util.chatPrint(("%s^7: %s"):format(name,msg))
+end
+
+function sayAll(message)
+	util.chatPrint(consoleName .. message)
+end
+
+function sayTo(player,msg)
+	player:tell(consoleName .. msg)
+ end
 -- TODO:alias
 
 function onPlayerSay(args)
@@ -209,11 +336,17 @@ function onPlayerSay(args)
 		for cmd_nt,cmd in pairs(commands) do
 			-- print(cmd_nt)
 			if cmd_nt == cmd_n then
-					cmd[2](args.sender,chunks)
+					cmd[2](args.sender,args.message:split(" "))
 				return true
 			end
 		end
 		args.sender:iPrintLnBold(("^1Error: Invaild Command %s"):format(chunks[1]));
+		return true
+	end
+
+	local alias = getAlias(args.sender.name,args.sender:getguid())
+	if alias ~= nil then
+		sayAs(alias,args.message)
 		return true
 	end
 
@@ -297,10 +430,6 @@ function onPlayerSay(args)
 	]]--
 end
 
-function sayAll(message)
-	util.chatPrint(consoleName .. message)
-end
-
 function isEmpty(s)
   return s == nil or s == ''
 end
@@ -343,18 +472,28 @@ end
 
 -- TODO:HUD
 
-function onPlayerConnected(player)
-	sayAll(("^3Everyone welcome ^2%s^3 join our server!"):format(player.name))
-	for i,p in pairs(users) do
-		if p["name"] == player.name and p["guid"] == player:getguid() then
+function onPlayerConnected(p)
+	callbacks.afterDelay.add(1,function() 
+		p:setclientdvar("ui_mapname","^1test")
+	end)
+	for i,player in pairs(users.users) do
+		if player["name"] == p.name and player["guid"] == p:getguid() then
+			if player["level"] > 40 then
+				sayAll(("^3Welcome back,admin! ^2%s"):format(p.name))
+			elseif player["level"] < 0 then
+				util.executeCommand(string.format("kickclient %i \"%s\"", p:getentitynumber(), "^1You are banned from our server!"))  
+			else
+				sayAll(("^3Welcome back! ^2%s"):format(p.name))
+			end
 			return
 		end
 	end
+	sayAll(("^3Everyone welcome ^2%s^3 join our server!"):format(p.name))
 	addUser(player)
 end
 
 function onLevelNotify(notify)
-	print(notify)
+	-- print(notify)
 	if notify == "connected" then
 		callbacks.afterDelay.add(1,function() 
 			-- two shit fors

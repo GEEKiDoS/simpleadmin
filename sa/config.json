@@ -1,5 +1,6 @@
 {
     "timeOut": 10,
+    "prefix":"^0[^5GEEK^0]^7: ",
     "mapList": [
         {
             "mapName": "lockdown",
