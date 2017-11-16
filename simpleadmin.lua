@@ -47,7 +47,7 @@ function voteyes_f(sender,args)
 	if votingmap ~= "empty" then
 		if votedplayer[sender:getentitynumber()] == "no" then
 			sender:iPrintLnBold("^2Changing Your vote to yes...")
-		else
+		elseif votedplayer[sender:getentitynumber()] == "yes"
 			sender:iPrintLnBold("^3You already voted yes!")
 			return
 		end
@@ -60,7 +60,7 @@ function voteno_f(sender,args)
 	if votingmap ~= "empty" then
 		if votedplayer[sender:getentitynumber()] == "yes" then
 			sender:iPrintLnBold("^2Changing Your vote to no...")
-		else
+		elseif votedplayer[sender:getentitynumber()] =="no"
 			sender:iPrintLnBold("^3You already voted no!")
 			return
 		end
