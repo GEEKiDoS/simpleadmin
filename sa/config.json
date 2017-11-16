@@ -3,67 +3,63 @@
     "prefix":"^0[^5GEEK^0]^7: ",
     "mapList": [
         {
-            "mapName": "lockdown",
+            "mapName": "Lockdown",
             "mapCode": "mp_alpha"
         },
         {
-            "mapName": "bootleg",
+            "mapName": "Bootleg",
             "mapCode": "mp_bootleg"
         },
         {
-            "mapName": "mission",
+            "mapName": "Mission",
             "mapCode": "mp_bravo"
         },
         {
-            "mapName": "lockdown",
-            "mapCode": "mp_alpha"
-        },
-        {
-            "mapName": "dome",
+            "mapName": "Dome",
             "mapCode": "mp_dome"
         },
         {
-            "mapName": "downturn",
+            "mapName": "Downturn",
             "mapCode": "mp_exchange"
         },
         {
-            "mapName": "hardhat",
+            "mapName": "Hardhat",
             "mapCode": "mp_hardhat"
         },
         {
-            "mapName": "interchange",
+            "mapName": "Interchange",
             "mapCode": "mp_interchange"
         },
         {
-            "mapName": "fallen",
+            "mapName": "Fallen",
             "mapCode": "mp_lambeth"
         },
         {
-            "mapName": "bakaara",
+            "mapName": "Bakaara",
             "mapCode": "mp_mogadishu"
         },
         {
-            "mapName": "resistance",
+            "mapName": "Resistance",
             "mapCode": "mp_paris"
         },
         {
-            "mapName": "arkaden",
+            "mapName": "Arkaden",
             "mapCode": "mp_plaza2"
         },
         {
-            "mapName": "outpost",
+            "mapName": "Outpost",
             "mapCode": "mp_radar"
         },
         {
-            "mapName": "seatown",
+            "mapName": "Seatown",
             "mapCode": "mp_seatown"
         },
         {
-            "mapName": "underground",
+            "mapName": "Underground",
             "mapCode": "mp_underground"
         },
         {
-            "mapName": "village",
+            "mapName": "Village",
             "mapCode": "mp_village"
         }
     ]

@@ -10,12 +10,9 @@ commands = {}
 players = {}
 votingmap = "empty"
 votingtime = 0
-voteyes = 0
-voteno = 0
 needTochange = false
 needTonotify = false
 votedplayer = {}
-votedplayernum = 0
 consoleName = "^0[^:Pluto^0]:^7 "
 
 -- commands
@@ -34,11 +31,9 @@ function votemap_f(sender,args)
 					sender:iPrintLnBold("^3Warning: The current map is ^2" .. args[2] .. " ^3already!")
 					return
 				end
-				voteyes = 1
 				votingmap = tmp
-				votedplayernum = 1
-				votedplayer[0] = sender.name
-				sayAll("^;" .. sender.name .. " ^3want change map to ^2" .. args[2])
+				votedplayer[sender:getentitynumber()] = "yes" -- luffy's tip
+				sayAll("^;" .. sender.name .. " ^3want change map to ^2" .. getMapName(args[2]))
 				sayAll("Say ^4!y ^7to vote yes,say ^4!n ^7to vote no.")
 			else
 				sender:iPrintLnBold("^1Error: ^2" .. args[2] .. " ^1is not a vaild map!")
@@ -50,27 +45,27 @@ end
 
 function voteyes_f(sender,args)
 	if votingmap ~= "empty" then
-		if isPlayerVoted(sender.name) then
-			sender:iPrintLnBold("^1Error: You already voted!")
+		if votedplayer[sender:getentitynumber()] == "no" then
+			sender:iPrintLnBold("^2Changing Your vote to yes...")
+		else
+			sender:iPrintLnBold("^3You already voted yes!")
 			return
 		end
-		voteyes = voteyes + 1
-		votedplayer[votedplayernum] = sender.name
-		votedplayernum = votedplayernum + 1
-		sayAll(string.format("^;Voting %s,^2Yes: %d^7,^1No: %d^7.",votingmap,voteyes,voteno))
+		votedplayer[sender:getentitynumber()] = "yes"
+		-- sayAll(string.format("^;Voting %s,^2Yes: %d^7,^1No: %d^7.",votingmap,voteyes,voteno))
 	end
 end
 
 function voteno_f(sender,args)
 	if votingmap ~= "empty" then
-		if isPlayerVoted(sender.name) then
-			sender:iPrintLnBold("^1Error: You already voted!")
+		if votedplayer[sender:getentitynumber()] == "yes" then
+			sender:iPrintLnBold("^2Changing Your vote to no...")
+		else
+			sender:iPrintLnBold("^3You already voted no!")
 			return
 		end
-		voteno = voteno + 1
-		votedplayer[votedplayernum] = sender.name
-		votedplayernum = votedplayernum + 1
-		sayAll(string.format("^;Voting %s,^2Yes: %d^7,^1No: %d^7.",votingmap,voteyes,voteno))
+		votedplayer[sender:getentitynumber()] = "no"
+		-- sayAll(string.format("^;Voting %s,^2Yes: %d^7,^1No: %d^7.",votingmap,voteyes,voteno))
 	end
 end
 
@@ -283,8 +278,17 @@ function fileExists(name)
 
 function getMapCode(input)
 	for i,map in pairs(mapList) do
-		if map["mapName"] == input or map["mapCode"] == input then 
+		if map["mapName"]:lower() == input:lower() or map["mapCode"]:lower() == input:lower() then 
 			return map["mapCode"]
+		end
+	end
+	return nil
+end
+
+function getMapName(input)
+	for i,map in pairs(mapList) do
+		if map["mapName"]:lower() == input:lower() or map["mapCode"]:lower() == input:lower() then 
+			return map["mapName"]
 		end
 	end
 	return nil
@@ -324,7 +328,6 @@ end
 function sayTo(player,msg)
 	player:tell(consoleName .. msg)
  end
--- TODO:alias
 
 function onPlayerSay(args)
 	local lowerMsg = args.message:lower()
@@ -351,83 +354,6 @@ function onPlayerSay(args)
 	end
 
 	return false
-
-	-- args.sender:iPrintLnBold(string.format("^;%s",lowerMsg))
-	--[[
-	if string.sub(chunks[1], 1, 1) == "!" then
-		if chunks[1] == "!votemap" then
-			if isEmpty(chunks[2]) then
-				args.sender:iPrintLnBold("^;Useage: !votemap <mapname> ")
-				return true
-			end
-
-			if votingmap == "empty" then
-				local tmp = chunks[2]
-				tmp = getMapCode(tmp)
-
-				if not isEmpty(tmp) then
-					if tmp == gsc.getdvar("mapname") then
-						args.sender:iPrintLnBold("^3Warning: The current map is ^2" .. chunks[2] .. "^3already!")
-						return true;
-					end
-					voteyes = 1
-					votingmap = tmp
-					votedplayernum = 1
-					votedplayer[0] = args.sender.name
-					sayAll("^;" .. args.sender.name .. " ^3want change map to ^2" .. chunks[2])
-					sayAll("Say ^4!yes ^7to vote yes,say ^4!no ^7to vote no.")
-				else
-					args.sender:iPrintLnBold("^1Error: ^2" .. chunks[2] .. " ^1is not a vaild map!")
-				end
-			else
-				args.sender:iPrintLnBold("^1Error: Someone is voting map!")
-			end
-		elseif chunks[1] == "!yes" then
-			if votingmap ~= "empty" then
-				if isPlayerVoted(args.sender.name) then
-					args.sender:iPrintLnBold("^1Error: You already voted!")
-					return true;
-				end
-				voteyes = voteyes + 1
-				votedplayer[votedplayernum] = args.sender.name
-				votedplayernum = votedplayernum + 1
-				sayAll(string.format("^;Voting %s,^2Yes: %d" .. "^7,^1No: %d^7.",votingmap,voteyes,voteno))
-			end
-		elseif chunks[1] == "!no" then
-			if votingmap ~= "empty" then
-				if isPlayerVoted(args.sender.name) then
-					args.sender:iPrintLnBold("^1Error: You already voted!")
-					return true;
-				end
-				voteno = voteno + 1
-				votedplayer[votedplayernum] = args.sender.name
-				votedplayernum = votedplayernum + 1
-				sayAll(string.format("^;Voting %s,^2Yes: %d" .. "^7,^1No: %d^7.",votingmap,voteyes,voteno))
-			end
-		elseif chunks[1] == "!map" then
-			if isAdmin(args.sender.name,args.sender:getguid()) then
-				if isEmpty(chunks[2]) then
-					args.sender:iPrintLnBold("^;Useage: !map <mapname>")
-					return true
-				end
-				local tmp = chunks[2]
-				tmp = getMapCode(tmp)
-
-				if not isEmpty(tmp) then
-					votingmap = tmp
-					needTonotify = true
-				else
-					args.sender:iPrintLnBold("^1Error: ^2" .. chunks[2] .. " ^1is not a vaild map!")
-				end
-			else
-				args.sender:iPrintLnBold("^1Error: You are not admin!")
-				print("Player: " .. args.sender.name .." is trying to change map.GUID:" .. args.sender:getguid())
-			end
-		end
-		return true
-	end
-	return false
-	]]--
 end
 
 function isEmpty(s)
@@ -437,19 +363,30 @@ end
 function checkVote()
 	if votingmap ~= "empty" then
 
-		votingtime = votingtime + 1
+		votingtime = votingtime + 2
 
 		if needTonotify then
 			needTonotify = false
 			needTochange = true
-			sayAll("Changing map to ^2" .. votingmap .. "^7...")
+			sayAll("Changing map to ^2" .. getMapName(votingmap) .. "^7...")
 		end
 
 		if needTochange then
 			local temp = votingmap
 			util.executeCommand("map " .. temp)
 		end
-		if votingtime == timeout then -- timeout
+		if votingtime >= timeout then -- timeout
+			local voteyes = 0
+			local voteno = 0
+
+			for i,ticket in pairs(votedplayer) do
+				if ticket == "yes" then 
+					voteyes = voteyes + 1
+				else
+					voteno = voteno + 1
+				end
+			end
+
 			if voteyes > voteno then
 				needTonotify = true
 			else
@@ -460,18 +397,7 @@ function checkVote()
 	end
 end
 
-function isPlayerVoted(player)
-	for i= 0, 15 do
-   		if votedplayer[i] == player then
-		   return true
-		end 
-	end
-
-	return false
-end
-
 -- TODO:HUD
-
 function onPlayerConnected(p)
 	callbacks.afterDelay.add(1,function() 
 		p:setclientdvar("ui_mapname","^1test")
@@ -493,7 +419,7 @@ function onPlayerConnected(p)
 end
 
 function onLevelNotify(notify)
-	-- print(notify)
+	print(notify)
 	if notify == "connected" then
 		callbacks.afterDelay.add(1,function() 
 			-- two shit fors
@@ -517,18 +443,17 @@ end
 
 -- Callbacks
 callbacks.playerSay.add(onPlayerSay)
-callbacks.onInterval.add(1000, checkVote)
+callbacks.onInterval.add(2000, checkVote)
 callbacks.levelNotify.add(onLevelNotify)
+
 callbacks.postGameInit.add(function () 
-	readConfig()
-	votingmap = "empty"
-	votingtime = 0
-	needTochange = false
-	votedplayer = {}
-	InitCmds()
-	print("Simple Admin system by GEEKiDoS")
+	util.executeCommand("unloadscript simpleadmin;loadscript simpleadmin") -- reload script when loaded a new map
 end)
 
 readConfig()
+votingmap = "empty"
+votingtime = 0
+needTochange = false
+votedplayer = {}
 InitCmds()
 print("Simple Admin system by GEEKiDoS")
