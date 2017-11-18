@@ -1,10 +1,11 @@
 -- mapedit
 ctp = {}
+cfloor = {}
 cwall = {}
 mapedit = {}
 
 -- commands
-function fly_f(sender,args)
+function fly_f(sender,args) -- this allows you respawn in the spectator team lel
 	if sender.sessionstate == "spectator" then
 		sender:allowspectateteam("freelook",false)
 		sender.sessionstate = "playing"
@@ -14,11 +15,11 @@ function fly_f(sender,args)
 	end
 end
 
-function tp_f(sender,args)
+function tp_f(sender,args) -- add a teleport spot
 	if ctp["player"] == nil then
 		ctp["player"] = sender
 		ctp["tpin"] = sender.origin
-		sender:iPrintLnBold("TP Start Set:" .. sender.origin)
+		sender:iPrintLnBold(("TP Start Set:(%f %f %f)"):format(sender.origin.x,sender.origin.y,sender.origin.z))
 	elseif ctp["player"] == sender then
 		local item = {}
 		item["tpin"] = {}
@@ -35,25 +36,39 @@ function tp_f(sender,args)
 
 		createTP(ctp["tpin"],sender.origin)
 		ctp["player"] = nil
-		sender:iPrintLnBold("TP End Set:" .. sender.origin)
+		sender:iPrintLnBold(("TP End Set:(%f %f %f)"):format(sender.origin.x,sender.origin.y,sender.origin.z))
 	end
 end
 
-function wall_f(sender,args)
+function wall_f(sender,args) -- create a wall
 	if cwall["player"] == nil then
 		cwall["player"] = sender
 		print(sender.origin)
 		cwall["start"] = sender.origin
-		sender:iPrintLnBold("Wall Start Set:" .. sender.origin)
+		sender:iPrintLnBold(("Wall Start Set:(%f %f %f)"):format(sender.origin.x,sender.origin.y,sender.origin.z))
 	elseif cwall["player"] == sender then
 		spawnWall(cwall["start"],sender.origin)
 		cwall["player"] = nil
-		sender:iPrintLnBold("Wall End Set:" .. sender.origin)
+		sender:iPrintLnBold(("Wall End Set:(%f %f %f)"):format(sender.origin.x,sender.origin.y,sender.origin.z))
 	end
 end
 
-function savemapedit_f(sender,args)
+function floor_f(sender,args) -- create a floor
+	if cfloor["player"] == nil then
+		cfloor["player"] = sender
+		print(sender.origin)
+		cfloor["start"] = sender.origin
+		sender:iPrintLnBold(("Floor Start Set:(%f %f %f)"):format(sender.origin.x,sender.origin.y,sender.origin.z))
+	elseif cfloor["player"] == sender then
+		createFloor(cfloor["start"],sender.origin)
+		cfloor["player"] = nil
+		sender:iPrintLnBold(("Floor End Set:(%f %f %f)"):format(sender.origin.x,sender.origin.y,sender.origin.z))
+	end
+end
+
+function savemapedit_f(sender,args) -- save the map to json file
 	writeMapedit()
+	sender:iPrintLnBold("Map saved!")
 end
 -- commands
 
@@ -69,6 +84,12 @@ function addMapedit(type,item)
 		end
 
 		table.insert( mapedit.mapedit.tp , item)
+	elseif type == "wall" then
+		if mapedit.mapedit.wall == nil then
+			mapedit.mapedit.wall = {}
+		end
+
+		table.insert( mapedit.mapedit.wall , item)
 	end
 end
 
@@ -187,6 +208,25 @@ function createTP(tpIn,tpOut)
 	end)
 
 	spawnCrate(tpOut,Vector3.new(0,0,0))
+end
+
+function createFloor(corner1, corner2)
+	local num = math.abs(corner1.x - corner2.x)
+	local num2 = math.abs(corner1.y - corner2.y)
+
+	local num3 = math.ceil(num / 50)
+	local num4 = math.ceil(num2 / 30)
+	local vector = corner2 - corner1;
+	local vector2 = Vector3.new(vector.x / num3, vector.x / num4, 0);
+	local entity = gsc.spawn("script_origin", Vector3.new((corner1.x + corner2.x) / 2, (corner1.y + corner2.y) / 2, corner1.z));
+	for i = 0,num3 - 1 do
+		for j = 0, num4 - 1 do
+			local entity2 = spawnCrate((corner1 + (Vector3.new(vector2.x, 0, 0) * i)) + (Vector3.new(0, vector2.y, 0) * j), Vector3.new(0, 0, 0));
+			entity2:enablelinkto()
+			entity2:linkto(entity)
+		end
+	end
+	return entity
 end
 
 function spawnWall(startp,endp)
