@@ -202,6 +202,13 @@ function createTP(tpIn,tpOut)
 	callbacks.onInterval.add(100,function ()
 		for p in util.iterPlayers() do
 			if math.sqrt( pow(tpIn.x - p.origin.x, 2) + pow(tpIn.y - p.origin.y, 2) + pow(tpIn.z - p.origin.z, 2)) < 50 then
+				local weapon = p:getCurrentWeapon()
+				p:giveWeapon("killstreak_uav_mp")
+				p:switchToWeaponImmediate("killstreak_uav_mp")
+				callbacks.afterDelay.add(1500,function() 
+					p:takeWeapon("killstreak_uav_mp")
+					p:switchToWeaponImmediate(weapon)
+				end)
 				p:setorigin(tpOut)
 			end
 		end

@@ -198,9 +198,14 @@ function give_f(sender,args)
 		return
 	end
 
-	if isEmpty(args[2]) or isEmpty(args[3])then
+	if isEmpty(args[2]) then
 		sender:iPrintLnBold("^;Usage: !give <weapon> [Player name]")
 		return
+	end
+
+	if isEmpty(args[3]) then
+		sender:giveWeapon(args[2])
+		sender:switchToWeaponImmediate(args[2])
 	end
 end
 
@@ -232,10 +237,15 @@ function InitCmds()
 	addCommand("iamgod"		,"Be a god"						, iamgod_f			,-1	)
 	addCommand("setrank"	,"Set a rank of someone."		, setrank_f			,100)
 	addCommand("fly"		,"FLY!!!!!"						, fly_f				,-1	)
+	addCommand("give"		,"Give weapon"					, give_f			,40 )
 --	addCommand("testhud"	,""								, testhud_f			,0	)
-	addCommand("tp"			,""								, tp_f				,-1	)
-	addCommand("wall"		,""								, wall_f			,-1	)
-	addCommand("save"		,""								, savemapedit_f		,-1	)
+
+	if true then -- there should be a flag to toggle is able to edit map
+		addCommand("tp"			,"Add a teleport spot"							, tp_f				,-1	)
+		addCommand("wall"		,"Create a wall"								, wall_f			,-1	)
+		addCommand("floor"		,"Create a floor"								, floor_f			,-1 )
+		addCommand("save"		,"Save the map to json file"					, savemapedit_f		,-1	)
+	end
 end
 
 function readConfig()
@@ -612,13 +622,14 @@ callbacks.postGameInit.add(function ()
 	util.executeCommand("unloadscript simpleadmin;loadscript simpleadmin") -- reload script when loaded a new map
 end)
 
--- load mapedit
-require "scripts.mp.sa.mapedit"
-
 readConfig()
 votingmap = "empty"
 votingtime = 0
 needTochange = false
 votedplayer = {}
+
+-- load mapedit
+require "scripts.mp.sa.mapedit"
+
 InitCmds()
 print("Simple Admin system by GEEKiDoS")
