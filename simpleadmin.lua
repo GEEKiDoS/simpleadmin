@@ -47,7 +47,7 @@ function voteyes_f(sender,args)
 	if votingmap ~= "empty" then
 		if votedplayer[sender:getentitynumber()] == "no" then
 			sender:iPrintLnBold("^2Changing Your vote to yes...")
-		elseif votedplayer[sender:getentitynumber()] == "yes"
+		elseif votedplayer[sender:getentitynumber()] == "yes" then
 			sender:iPrintLnBold("^3You already voted yes!")
 			return
 		end
@@ -60,7 +60,7 @@ function voteno_f(sender,args)
 	if votingmap ~= "empty" then
 		if votedplayer[sender:getentitynumber()] == "yes" then
 			sender:iPrintLnBold("^2Changing Your vote to no...")
-		elseif votedplayer[sender:getentitynumber()] =="no"
+		elseif votedplayer[sender:getentitynumber()] =="no" then
 			sender:iPrintLnBold("^3You already voted no!")
 			return
 		end
@@ -123,9 +123,16 @@ function setalias_f(sender,args)
 		return
 	end
 
+	local alias = args[2]
+	local i = 3
+	while args[i] ~= nil do
+		alias = alias .. " " .. args[i]
+		i = i + 1
+	end
+
 	for i,player in pairs(users.users) do
 		if player["name"] == player.name and player["guid"] == sender:getguid() then
-			users.users[i]["alias"] = args[2]
+			users.users[i]["alias"] = alias
 			writeUsers()
 		end
 	end
@@ -185,6 +192,28 @@ function setrank_f(sender,args)
 	end
 end
 
+function give_f(sender,args)
+	if not isAdmin(sender.name,sender:getguid()) then
+		sender:iPrintLnBold("^1Error: You are not the admin of this server!")
+		return
+	end
+
+	if isEmpty(args[2]) or isEmpty(args[3])then
+		sender:iPrintLnBold("^;Usage: !give <weapon> [Player name]")
+		return
+	end
+end
+
+function testhud_f(sender,args)
+	callbacks.afterDelay.add(1,function() 
+		local test = CreateServerFontString("objective",1.5)
+		SetPoint(test, "topmiddle", "topmiddle", 0, 45, 0)
+		test.fontscale = 6
+		test.color = Vector3.new(1,1,1)
+		test:settext("test")
+		test.alpha = 1
+	end)
+end	
 -- commands end
 
 -- The command in add command will call as cmd_f(sender,args)
@@ -202,7 +231,11 @@ function InitCmds()
 	addCommand("alias"		,"Set your alias"				, setalias_f		,0	)
 	addCommand("iamgod"		,"Be a god"						, iamgod_f			,-1	)
 	addCommand("setrank"	,"Set a rank of someone."		, setrank_f			,100)
--- 	addCommand("wu"			,""								, writeusers_f	)
+	addCommand("fly"		,"FLY!!!!!"						, fly_f				,-1	)
+--	addCommand("testhud"	,""								, testhud_f			,0	)
+	addCommand("tp"			,""								, tp_f				,-1	)
+	addCommand("wall"		,""								, wall_f			,-1	)
+	addCommand("save"		,""								, savemapedit_f		,-1	)
 end
 
 function readConfig()
@@ -232,8 +265,6 @@ function readConfig()
 
 	readUsers()
 end
-
--- users(not working now)
 
 function writeUsers()
 	local jsonstr = json.encode(users)
@@ -295,10 +326,6 @@ function getMapName(input)
 end
 
 function isAdmin(name,guid)
-	if users.users == nil then
-		return false
-	end
-
 	for i,player in pairs(users.users) do
 		if player["name"] == name and player["guid"] == guid and player["level"] > 40 then
 			return true
@@ -359,6 +386,124 @@ end
 function isEmpty(s)
   return s == nil or s == ''
 end
+
+-- HudElem
+function CreateServerFontString(font, fontScale)
+	local elem 
+	elem = gsc.newHudElem()
+	elem.font = font
+	elem.fontscale = fontScale
+	elem.x = 0
+	elem.y = 0
+	elem.height = 12 * tonumber(fontScale)
+	return elem
+end
+
+function CreateFontString(player,font, fontScale)
+	local elem 
+	elem = gsc.NewClientHudElem(player)
+	elem.font = font
+	elem.fontscale = fontScale
+	elem.x = 0
+	elem.y = 0
+	elem.height = 12 * tonumber(fontScale)
+	return elem
+end
+
+function SetPoint(elem, point, relativePoint, xOffset, yOffset, moveTime)
+	point = point:lower()
+	relativePoint = relativePoint:lower()
+
+	if (moveTime > 0) then
+		elem:moveovertime(moveTime)
+	end
+
+	local AlignX = "center"
+	local AlignY = "middle"
+	if string.match(point,"top") then
+		local AlignY = "top"
+	end
+	if string.match(point,"bottom") then
+		local AlignY = "bottom"
+	end
+	if string.match(point, "left") then
+		local AlignX = "left"
+	end
+	if string.match(point,"right") then
+		local AlignX = "right"
+	end
+	local relativeX
+	relativeX = "center_adjustable"
+	local relativeY
+	relativeY = "middle"
+	if string.match(relativePoint, "top") then
+		relativeY = "top_adjustable"
+	end
+	if string.match(relativePoint,"bottom") then
+		relativeY = "bottom_adjustable"
+	end
+	if string.match(relativePoint, "left") then
+		relativeX = "left_adjustable"
+	end
+	if string.match(relativePoint, "right") then
+		relativeX = "right_adjustable"
+	end
+
+	elem.horzalign = relativeX
+	elem.vertalign = relativeY
+
+	local xFactor
+	xFactor = 0
+	local yFactor
+	yFactor = 0
+	local offsetX
+	offsetX = 0
+	local offsetY
+	offsetY = 0
+
+	if relativeX == "center" then
+		offsetX = 320
+		if relativeX == "left_adjustable" then
+			xFactor = -1
+		else
+			xFactor = 1
+		end;
+	else
+		offsetX = 640
+		if relativeX == "left_adjustable" then
+			xFactor = -1;
+		else
+			xFactor = 1;
+		end;
+	end;
+	elem.x = offsetX * xFactor;
+
+	if relativeY == "middle" then
+		offsetY = 240
+		if relativeY == "top_adjustable" then
+			yFactor = -1
+		else
+			yFactor = 1
+		end
+	else
+		offsetY = 480
+		if relativeY == "top_adjustable" then
+			yFactor = -1;
+		else
+			yFactor = 1;
+		end;
+	end
+	elem.Y = offsetY * yFactor
+
+	elem.X = elem.X + xOffset
+	elem.Y = elem.Y + yOffset;
+end
+
+function ChangeFontScaleOverTime(elem, time, endScale)
+	elem:changefontscaleovertime(time)
+	elem.fontscale = endScale
+end
+-- HudElem End --
 
 function checkVote()
 	if votingmap ~= "empty" then
@@ -424,10 +569,10 @@ function onLevelNotify(notify)
 		callbacks.afterDelay.add(1,function() 
 			-- two shit fors
 			for p in util.iterPlayers() do
-				local isNewplayer = true;
+				local isNewplayer = true
 				for guid,player in pairs(players) do
 					if p.name == player[1] and p:getguid() == guid then
-						isNewplayer = false;
+						isNewplayer = false
 					end
 				end 
 				if isNewplayer then
@@ -441,14 +586,34 @@ function onLevelNotify(notify)
 	end
 end
 
+-- if player leaves the server then remove him form player list
+function checkPlayers()
+	for guid,player in pairs(players) do
+		local leaved = true
+		for p in util.iterPlayers() do
+			if p.name == player[1] and p:getguid() == guid then
+				leaved = false
+			end
+		end
+
+		if leaved then -- player is not on this server,remove him then
+			players[guid] = nil
+		end
+	end 
+end
+
 -- Callbacks
 callbacks.playerSay.add(onPlayerSay)
 callbacks.onInterval.add(2000, checkVote)
+callbacks.onInterval.add(5000, checkPlayers)
 callbacks.levelNotify.add(onLevelNotify)
 
 callbacks.postGameInit.add(function () 
 	util.executeCommand("unloadscript simpleadmin;loadscript simpleadmin") -- reload script when loaded a new map
 end)
+
+-- load mapedit
+require "scripts.mp.sa.mapedit"
 
 readConfig()
 votingmap = "empty"
