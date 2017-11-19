@@ -47,6 +47,19 @@ function wall_f(sender,args) -- create a wall
 		cwall["start"] = sender.origin
 		sender:iPrintLnBold(("Wall Start Set:(%f %f %f)"):format(sender.origin.x,sender.origin.y,sender.origin.z))
 	elseif cwall["player"] == sender then
+		local item = {}
+		item["startp"] = {}
+		item["startp"]["x"] = cwall["start"].x
+		item["startp"]["y"] = cwall["start"].y
+		item["startp"]["z"] = cwall["start"].z
+
+		item["endp"] = {}
+		item["endp"]["x"] = sender.origin.x
+		item["endp"]["y"] = sender.origin.y
+		item["endp"]["z"] = sender.origin.z
+
+		addMapedit("wall",item)
+
 		spawnWall(cwall["start"],sender.origin)
 		cwall["player"] = nil
 		sender:iPrintLnBold(("Wall End Set:(%f %f %f)"):format(sender.origin.x,sender.origin.y,sender.origin.z))
@@ -59,6 +72,19 @@ function floor_f(sender,args) -- create a floor
 		cfloor["start"] = sender.origin
 		sender:iPrintLnBold(("Floor Start Set:(%f %f %f)"):format(sender.origin.x,sender.origin.y,sender.origin.z))
 	elseif cfloor["player"] == sender then
+		local item = {}
+		item["corner1"] = {}
+		item["corner1"]["x"] = cfloor["start"].x
+		item["corner1"]["y"] = cfloor["start"].y
+		item["corner1"]["z"] = cfloor["start"].z
+
+		item["corner2"] = {}
+		item["corner2"]["x"] = sender.origin.x
+		item["corner2"]["y"] = sender.origin.y
+		item["corner2"]["z"] = sender.origin.z
+
+		addMapedit("floor",item)
+
 		createFloor(cfloor["start"],sender.origin)
 		cfloor["player"] = nil
 		sender:iPrintLnBold(("Floor End Set:(%f %f %f)"):format(sender.origin.x,sender.origin.y,sender.origin.z))
@@ -71,6 +97,19 @@ function ramp_f(sender,args) -- create a ramp
 		cramp["start"] = sender.origin
 		sender:iPrintLnBold(("Ramp Start Set:(%f %f %f)"):format(sender.origin.x,sender.origin.y,sender.origin.z))
 	elseif cramp["player"] == sender then
+		local item = {}
+		item["startp"] = {}
+		item["startp"]["x"] = cramp["start"].x
+		item["startp"]["y"] = cramp["start"].y
+		item["startp"]["z"] = cramp["start"].z
+
+		item["endp"] = {}
+		item["endp"]["x"] = sender.origin.x
+		item["endp"]["y"] = sender.origin.y
+		item["endp"]["z"] = sender.origin.z
+
+		addMapedit("ramp",item)
+
 		createRamp(cramp["start"],sender.origin)
 		cramp["player"] = nil
 		sender:iPrintLnBold(("Ramp End Set:(%f %f %f)"):format(sender.origin.x,sender.origin.y,sender.origin.z))
@@ -101,6 +140,18 @@ function addMapedit(type,item)
 		end
 
 		table.insert( mapedit.mapedit.wall , item)
+	elseif type == "floor" then
+		if mapedit.mapedit.floor == nil then
+			mapedit.mapedit.floor = {}
+		end
+
+		table.insert( mapedit.mapedit.floor , item)
+	elseif type == "ramp" then
+		if mapedit.mapedit.ramp == nil then
+			mapedit.mapedit.ramp = {}
+		end
+
+		table.insert( mapedit.mapedit.ramp , item)
 	end
 end
 
@@ -115,6 +166,24 @@ function loadMapedit()
 		local TPin = Vector3.new(item["tpin"]["x"],item["tpin"]["y"],item["tpin"]["z"])
 		local TPout = Vector3.new(item["tpout"]["x"],item["tpout"]["y"],item["tpout"]["z"])
 		createTP(TPin,TPout)
+	end
+
+	for i,item in pairs(mapedit.mapedit.wall) do
+		local startp = Vector3.new(item["startp"]["x"],item["startp"]["y"],item["startp"]["z"])
+		local endp = Vector3.new(item["endp"]["x"],item["endp"]["y"],item["endp"]["z"])
+		spawnWall(startp,endp)
+	end
+
+	for i,item in pairs(mapedit.mapedit.floor) do
+		local corner1 = Vector3.new(item["corner1"]["x"],item["corner1"]["y"],item["corner1"]["z"])
+		local corner2 = Vector3.new(item["corner2"]["x"],item["corner2"]["y"],item["corner2"]["z"])
+		spawnWall(corner1,corner2)
+	end
+
+	for i,item in pairs(mapedit.mapedit.ramp) do
+		local startp = Vector3.new(item["startp"]["x"],item["startp"]["y"],item["startp"]["z"])
+		local endp = Vector3.new(item["endp"]["x"],item["endp"]["y"],item["endp"]["z"])
+		spawnWall(startp,endp)
 	end
 end
 
