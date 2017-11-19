@@ -182,7 +182,7 @@ function loadMapedit()
 		for i,item in pairs(mapedit.mapedit.floor) do
 			local corner1 = Vector3.new(item["corner1"]["x"],item["corner1"]["y"],item["corner1"]["z"])
 			local corner2 = Vector3.new(item["corner2"]["x"],item["corner2"]["y"],item["corner2"]["z"])
-			spawnWall(corner1,corner2)
+			createFloor(corner1,corner2)
 		end
 	end
 
@@ -190,7 +190,7 @@ function loadMapedit()
 		for i,item in pairs(mapedit.mapedit.ramp) do
 			local startp = Vector3.new(item["startp"]["x"],item["startp"]["y"],item["startp"]["z"])
 			local endp = Vector3.new(item["endp"]["x"],item["endp"]["y"],item["endp"]["z"])
-			spawnWall(startp,endp)
+			createRamp(startp,endp)
 		end
 	end
 end
@@ -306,7 +306,7 @@ function createTP(tpIn,tpOut)
 		end
 	end)
 
-	spawnCrate(tpOut,Vector3.new(0,0,0))
+	-- spawnCrate(tpOut,Vector3.new(0,0,0))
 end
 
 function createRamp(top, bottom)
