@@ -162,28 +162,36 @@ function loadMapedit()
         return
 	end
 
-	for i,item in pairs(mapedit.mapedit.tp) do
-		local TPin = Vector3.new(item["tpin"]["x"],item["tpin"]["y"],item["tpin"]["z"])
-		local TPout = Vector3.new(item["tpout"]["x"],item["tpout"]["y"],item["tpout"]["z"])
-		createTP(TPin,TPout)
+	if mapedit.mapedit.tp ~= nil then
+		for i,item in pairs(mapedit.mapedit.tp) do
+			local TPin = Vector3.new(item["tpin"]["x"],item["tpin"]["y"],item["tpin"]["z"])
+			local TPout = Vector3.new(item["tpout"]["x"],item["tpout"]["y"],item["tpout"]["z"])
+			createTP(TPin,TPout)
+		end
 	end
 
-	for i,item in pairs(mapedit.mapedit.wall) do
-		local startp = Vector3.new(item["startp"]["x"],item["startp"]["y"],item["startp"]["z"])
-		local endp = Vector3.new(item["endp"]["x"],item["endp"]["y"],item["endp"]["z"])
-		spawnWall(startp,endp)
+	if mapedit.mapedit.wall ~= nil then
+		for i,item in pairs(mapedit.mapedit.wall) do
+			local startp = Vector3.new(item["startp"]["x"],item["startp"]["y"],item["startp"]["z"])
+			local endp = Vector3.new(item["endp"]["x"],item["endp"]["y"],item["endp"]["z"])
+			spawnWall(startp,endp)
+		end
 	end
 
-	for i,item in pairs(mapedit.mapedit.floor) do
-		local corner1 = Vector3.new(item["corner1"]["x"],item["corner1"]["y"],item["corner1"]["z"])
-		local corner2 = Vector3.new(item["corner2"]["x"],item["corner2"]["y"],item["corner2"]["z"])
-		spawnWall(corner1,corner2)
+	if mapedit.mapedit.floor ~= nil then
+		for i,item in pairs(mapedit.mapedit.floor) do
+			local corner1 = Vector3.new(item["corner1"]["x"],item["corner1"]["y"],item["corner1"]["z"])
+			local corner2 = Vector3.new(item["corner2"]["x"],item["corner2"]["y"],item["corner2"]["z"])
+			spawnWall(corner1,corner2)
+		end
 	end
 
-	for i,item in pairs(mapedit.mapedit.ramp) do
-		local startp = Vector3.new(item["startp"]["x"],item["startp"]["y"],item["startp"]["z"])
-		local endp = Vector3.new(item["endp"]["x"],item["endp"]["y"],item["endp"]["z"])
-		spawnWall(startp,endp)
+	if mapedit.mapedit.ramp ~= nil then
+		for i,item in pairs(mapedit.mapedit.ramp) do
+			local startp = Vector3.new(item["startp"]["x"],item["startp"]["y"],item["startp"]["z"])
+			local endp = Vector3.new(item["endp"]["x"],item["endp"]["y"],item["endp"]["z"])
+			spawnWall(startp,endp)
+		end
 	end
 end
 
