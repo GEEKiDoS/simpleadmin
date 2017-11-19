@@ -3,6 +3,7 @@ ctp = {}
 cfloor = {}
 cwall = {}
 cramp = {}
+cstair = {}
 mapedit = {}
 
 -- commands
@@ -43,6 +44,11 @@ end
 
 function wall_f(sender,args) -- create a wall
 	if cwall["player"] == nil then
+		if isEmpty(args[2]) then
+			cwall["type"] = tonumber(args[2])
+		else
+			cwall["type"] = 1
+		end
 		cwall["player"] = sender
 		cwall["start"] = sender.origin
 		sender:iPrintLnBold(("Wall Start Set:(%f %f %f)"):format(sender.origin.x,sender.origin.y,sender.origin.z))
@@ -58,9 +64,11 @@ function wall_f(sender,args) -- create a wall
 		item["endp"]["y"] = sender.origin.y
 		item["endp"]["z"] = sender.origin.z
 
+		item["type"] = cwall["type"]
+
 		addMapedit("wall",item)
 
-		spawnWall(cwall["start"],sender.origin)
+		spawnWall(cwall["start"],sender.origin,cwall["type"])
 		cwall["player"] = nil
 		sender:iPrintLnBold(("Wall End Set:(%f %f %f)"):format(sender.origin.x,sender.origin.y,sender.origin.z))
 	end
@@ -68,6 +76,11 @@ end
 
 function floor_f(sender,args) -- create a floor
 	if cfloor["player"] == nil then
+		if isEmpty(args[2]) then
+			cfloor["type"] = tonumber(args[2])
+		else
+			cfloor["type"] = 1
+		end
 		cfloor["player"] = sender
 		cfloor["start"] = sender.origin
 		sender:iPrintLnBold(("Floor Start Set:(%f %f %f)"):format(sender.origin.x,sender.origin.y,sender.origin.z))
@@ -83,9 +96,11 @@ function floor_f(sender,args) -- create a floor
 		item["corner2"]["y"] = sender.origin.y
 		item["corner2"]["z"] = sender.origin.z
 
+		item["type"] = cfloor["type"]
+
 		addMapedit("floor",item)
 
-		createFloor(cfloor["start"],sender.origin)
+		createFloor(cfloor["start"],sender.origin,cfloor["type"])
 		cfloor["player"] = nil
 		sender:iPrintLnBold(("Floor End Set:(%f %f %f)"):format(sender.origin.x,sender.origin.y,sender.origin.z))
 	end
@@ -93,6 +108,11 @@ end
 
 function ramp_f(sender,args) -- create a ramp
 	if cramp["player"] == nil then
+		if isEmpty(args[2]) then
+			cramp["type"] = tonumber(args[2])
+		else
+			cramp["type"] = 1
+		end
 		cramp["player"] = sender
 		cramp["start"] = sender.origin
 		sender:iPrintLnBold(("Ramp Start Set:(%f %f %f)"):format(sender.origin.x,sender.origin.y,sender.origin.z))
@@ -108,11 +128,40 @@ function ramp_f(sender,args) -- create a ramp
 		item["endp"]["y"] = sender.origin.y
 		item["endp"]["z"] = sender.origin.z
 
+		item["type"] = cramp["type"]
+
 		addMapedit("ramp",item)
 
-		createRamp(cramp["start"],sender.origin)
+		createRamp(cramp["start"],sender.origin,cramp["type"])
 		cramp["player"] = nil
 		sender:iPrintLnBold(("Ramp End Set:(%f %f %f)"):format(sender.origin.x,sender.origin.y,sender.origin.z))
+	end
+end
+
+function stair_f(sender,args) -- create a stair
+	if cstair["player"] == nil then
+		cstair["player"] = sender
+		cstair["start"] = sender.origin
+		sender:iPrintLnBold(("Stair Start Set:(%f %f %f)"):format(sender.origin.x,sender.origin.y,sender.origin.z))
+	elseif cstair["player"] == sender then
+		local item = {}
+		item["startp"] = {}
+		item["startp"]["x"] = cstair["start"].x
+		item["startp"]["y"] = cstair["start"].y
+		item["startp"]["z"] = cstair["start"].z
+
+		item["endp"] = {}
+		item["endp"]["x"] = sender.origin.x
+		item["endp"]["y"] = sender.origin.y
+		item["endp"]["z"] = sender.origin.z
+
+		item["type"] = cstair["type"]
+
+		addMapedit("stair",item)
+
+		createStair(cstair["start"],sender.origin,cstair["type"])
+		cstair["player"] = nil
+		sender:iPrintLnBold(("Stair End Set:(%f %f %f)"):format(sender.origin.x,sender.origin.y,sender.origin.z))
 	end
 end
 
@@ -152,6 +201,12 @@ function addMapedit(type,item)
 		end
 
 		table.insert( mapedit.mapedit.ramp , item)
+	elseif type == "stair" then
+		if mapedit.mapedit.stair == nil then
+			mapedit.mapedit.stair = {}
+		end
+
+		table.insert( mapedit.mapedit.stair , item)
 	end
 end
 
@@ -166,7 +221,11 @@ function loadMapedit()
 		for i,item in pairs(mapedit.mapedit.tp) do
 			local TPin = Vector3.new(item["tpin"]["x"],item["tpin"]["y"],item["tpin"]["z"])
 			local TPout = Vector3.new(item["tpout"]["x"],item["tpout"]["y"],item["tpout"]["z"])
-			createTP(TPin,TPout)
+			if item["type"] ~= nil then
+				createTP(TPin,TPout,item["type"])
+			else
+				createTP(TPin,TPout)
+			end
 		end
 	end
 
@@ -174,7 +233,11 @@ function loadMapedit()
 		for i,item in pairs(mapedit.mapedit.wall) do
 			local startp = Vector3.new(item["startp"]["x"],item["startp"]["y"],item["startp"]["z"])
 			local endp = Vector3.new(item["endp"]["x"],item["endp"]["y"],item["endp"]["z"])
-			spawnWall(startp,endp)
+			if item["type"] ~= nil then
+				spawnWall(startp,endp,item["type"])
+			else
+				spawnWall(startp,endp)
+			end
 		end
 	end
 
@@ -182,7 +245,11 @@ function loadMapedit()
 		for i,item in pairs(mapedit.mapedit.floor) do
 			local corner1 = Vector3.new(item["corner1"]["x"],item["corner1"]["y"],item["corner1"]["z"])
 			local corner2 = Vector3.new(item["corner2"]["x"],item["corner2"]["y"],item["corner2"]["z"])
-			createFloor(corner1,corner2)
+			if item["type"] ~= nil then
+				createFloor(corner1,corner2,item["type"])
+			else
+				createFloor(corner1,corner2)
+			end
 		end
 	end
 
@@ -190,7 +257,23 @@ function loadMapedit()
 		for i,item in pairs(mapedit.mapedit.ramp) do
 			local startp = Vector3.new(item["startp"]["x"],item["startp"]["y"],item["startp"]["z"])
 			local endp = Vector3.new(item["endp"]["x"],item["endp"]["y"],item["endp"]["z"])
-			createRamp(startp,endp)
+			if item["type"] ~= nil then
+				createRamp(startp,endp,item["type"])
+			else
+				createRamp(startp,endp)
+			end
+		end
+	end
+
+	if mapedit.mapedit.stair ~= nil then
+		for i,item in pairs(mapedit.mapedit.stair) do
+			local startp = Vector3.new(item["startp"]["x"],item["startp"]["y"],item["startp"]["z"])
+			local endp = Vector3.new(item["endp"]["x"],item["endp"]["y"],item["endp"]["z"])
+			if item["type"] ~= nil then
+				createStair(startp,endp,item["type"])
+			else
+				createStair(startp,endp)
+			end
 		end
 	end
 end
@@ -306,34 +389,50 @@ function createTP(tpIn,tpOut)
 		end
 	end)
 
-	-- spawnCrate(tpOut,Vector3.new(0,0,0))
+	spawnCrate(tpOut,Vector3.new(0,0,0),3,0)
 end
 
-function createRamp(top, bottom)
+function createStair(top, bottom,type)
+	type = type or 1
+
+	local distance = distance(top,bottom)
+	local blocks = math.ceil(distance / 30)
+	local A = Vector3.new((top.x - bottom.x) / blocks, (top.y - bottom.y) / blocks, (top.z - bottom.z) / blocks)
+	local temp = gsc.vectortoangles(top - bottom)
+	local BA = Vector3.new(temp.z, temp.y + 90, 0 )
+
+	for b = 0,blocks do
+		spawnCrate(bottom + (A * b), BA ,type)
+	end
+end
+
+function createRamp(top, bottom,type)
+	type = type or 1
 	local distance = distance(top,bottom)
 	local blocks = math.ceil(distance / 30)
 	local A = Vector3.new((top.x - bottom.x) / blocks, (top.y - bottom.y) / blocks, (top.z - bottom.z) / blocks)
 	local temp = gsc.vectortoangles(top - bottom)
 	local BA = Vector3.new(temp.z, temp.y + 90, temp.x);
 	for b = 0,blocks do
-		spawnCrate(bottom + (A * b), BA)
+		spawnCrate(bottom + (A * b), BA,type)
 	end
 end
 
-function createFloor(corner1, corner2)
+function createFloor(corner1, corner2,type)
+	type = type or 1
 	local width = corner1.x - corner2.x
 	if width < 0 then width = width * -1 end
 	local length = corner1.y - corner2.y
 	if length < 0 then length = length * -1 end
 
-	local bwide = math.ceil(width / 50)
+	local bwide = math.ceil(width / 60)
 	local blength = math.ceil(length / 30)
 	local C = corner2 - corner1;
 	local A = Vector3.new(C.x / bwide, C.y / blength, 0);
 	local center = gsc.spawn("script_origin", Vector3.new((corner1.x + corner2.x) / 2, (corner1.y + corner2.y) / 2, corner1.z));
 	for i = 0,bwide - 1 do
 		for j = 0, blength - 1 do
-			local crate = spawnCrate((corner1 + (Vector3.new(A.x, 0, 0) * i)) + (Vector3.new(0, A.y, 0) * j), Vector3.new(0, 0, 0));
+			local crate = spawnCrate((corner1 + (Vector3.new(A.x, 0, 0) * i)) + (Vector3.new(0, A.y, 0) * j), Vector3.new(0, 0, 0),type);
 			crate:enablelinkto()
 			crate:linkto(center)
 		end
@@ -341,10 +440,11 @@ function createFloor(corner1, corner2)
 	return center
 end
 
-function spawnWall(startp,endp)
+function spawnWall(startp,endp,type)
+	type = type or 1
 	local xydist = math.sqrt( pow(startp.x - endp.x, 2) + pow(startp.y - endp.y, 2))
 	local zdist = math.abs( startp.z - endp.z ) 
-	local numcrateXY = math.ceil(xydist / 55)
+	local numcrateXY = math.ceil(xydist / 60)
 	local numcrateZ = math.ceil(zdist / 30)
 
 	local v = endp - startp
@@ -358,16 +458,16 @@ function spawnWall(startp,endp)
 	local entity = gsc.spawn("script_origin",Vector3.new((startp.x + endp.x) / 2, (startp.y + endp.y) / 2, (startp.z + endp.z) / 2))
 
 	for i = 0, numcrateZ - 1 do
-		local entity2 = spawnCrate((startp + Vector3.new(x, y, 10)) + (Vector3.new(0, 0, vector2.z) * i), angles)
+		local entity2 = spawnCrate((startp + Vector3.new(x, y, 10)) + (Vector3.new(0, 0, vector2.z) * i), angles,type)
 		entity2:enablelinkto()
 		entity2:linkto(entity)
 		for j = 0, numcrateXY - 1 do
-			entity2 = spawnCrate(((startp + (Vector3.new(vector2.x, vector2.y, 0) * j)) + Vector3.new(0, 0, 10)) + (Vector3.new(0, 0, vector2.z) * i), angles);
+			entity2 = spawnCrate(((startp + (Vector3.new(vector2.x, vector2.y, 0) * j)) + Vector3.new(0, 0, 10)) + (Vector3.new(0, 0, vector2.z) * i), angles,type);
 			entity2:enablelinkto()
 			entity2:linkto(entity)
 		end
 
-		entity2 = spawnCrate((Vector3.new(endp.x, endp.x, startp.z) + Vector3.new(x * -1, y * -1, 10)) + (Vector3.new(0, 0, vector2.z) * i), angles);
+		entity2 = spawnCrate((Vector3.new(endp.x, endp.x, startp.z) + Vector3.new(x * -1, y * -1, 10)) + (Vector3.new(0, 0, vector2.z) * i), angles,type);
 		entity2:enablelinkto()
 		entity2:linkto(entity)
 	end
@@ -375,17 +475,36 @@ function spawnWall(startp,endp)
 	return entity;
 end
 
-function spawnCrate(origin,angles)
+function spawnCrate(origin,angles,type,collision)
+	type = type or 1
+	collision = collision or 1
+
 	if _airdropCollision == nil then
-		_airdropCollision = gsc.getEnt( "pf2_auto1" , "targetname" )
+		if gsc.getdvar("mapname") == "mp_radar" then
+			_airdropCollision = gsc.getEnt( "pf3_auto1" , "targetname" )
+		else
+			_airdropCollision = gsc.getEnt( "pf2_auto1" , "targetname" )
+		end
 		-- I found it via cheat engine!
 	end
 
 	local crate = gsc.spawn("script_model",origin)
-	crate:setModel("com_plasticcase_friendly")
+	if type == 2 then
+		crate:setModel("com_plasticcase_trap_friendly")
+	elseif type == 3 then
+		crate:setModel("com_plasticcase_trap_bombsquad")
+	elseif type == 4 then
+		crate:setModel("com_plasticcase_enemy")
+	elseif type == 5 then
+		crate:setModel("tag_origin")
+	else
+		crate:setModel("com_plasticcase_friendly")
+	end
 	crate.angles = angles
-	crate:solid()
-	crate:clonebrushmodeltoscriptmodel(_airdropCollision)
+	if collision == 1 then
+		crate:solid()
+		crate:clonebrushmodeltoscriptmodel(_airdropCollision)
+	end
 
 	return crate
 end

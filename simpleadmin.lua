@@ -243,8 +243,9 @@ function InitCmds()
 	if true then -- there should be a flag to toggle is able to edit map
 		addCommand("tp"			,"Add a teleport spot"							, tp_f				,0	)
 		addCommand("wall"		,"Create a wall"								, wall_f			,0	)
-		addCommand("floor"		,"Create a floor"								, floor_f			,0 )
-		addCommand("ramp"		,"Create a ramp"								, ramp_f		,0	)
+		addCommand("floor"		,"Create a floor"								, floor_f			,0 	)
+		addCommand("ramp"		,"Create a ramp"								, ramp_f			,0	)
+		addCommand("stair"		,"Create a stair"								, stair_f			,0	)
 		addCommand("save"		,"Save the map to json file"					, savemapedit_f		,0	)
 	end
 end
