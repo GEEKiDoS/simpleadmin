@@ -2,6 +2,7 @@
 ctp = {}
 cfloor = {}
 cwall = {}
+cramp = {}
 mapedit = {}
 
 -- commands
@@ -43,7 +44,6 @@ end
 function wall_f(sender,args) -- create a wall
 	if cwall["player"] == nil then
 		cwall["player"] = sender
-		print(sender.origin)
 		cwall["start"] = sender.origin
 		sender:iPrintLnBold(("Wall Start Set:(%f %f %f)"):format(sender.origin.x,sender.origin.y,sender.origin.z))
 	elseif cwall["player"] == sender then
@@ -56,13 +56,24 @@ end
 function floor_f(sender,args) -- create a floor
 	if cfloor["player"] == nil then
 		cfloor["player"] = sender
-		print(sender.origin)
 		cfloor["start"] = sender.origin
 		sender:iPrintLnBold(("Floor Start Set:(%f %f %f)"):format(sender.origin.x,sender.origin.y,sender.origin.z))
 	elseif cfloor["player"] == sender then
 		createFloor(cfloor["start"],sender.origin)
 		cfloor["player"] = nil
 		sender:iPrintLnBold(("Floor End Set:(%f %f %f)"):format(sender.origin.x,sender.origin.y,sender.origin.z))
+	end
+end
+
+function ramp_f(sender,args) -- create a ramp
+	if cramp["player"] == nil then
+		cramp["player"] = sender
+		cramp["start"] = sender.origin
+		sender:iPrintLnBold(("Ramp Start Set:(%f %f %f)"):format(sender.origin.x,sender.origin.y,sender.origin.z))
+	elseif cramp["player"] == sender then
+		createRamp(cramp["start"],sender.origin)
+		cramp["player"] = nil
+		sender:iPrintLnBold(("Ramp End Set:(%f %f %f)"):format(sender.origin.x,sender.origin.y,sender.origin.z))
 	end
 end
 
@@ -187,6 +198,10 @@ function pow(x,p)
 	return ret
 end
 
+function distance(a,b)
+	return math.sqrt( pow(a.x - b.x, 2) + pow(a.y - b.y, 2) + pow(a.z - b.z, 2))
+end
+
 function createTP(tpIn,tpOut)
     local flag = gsc.spawn("script_model",tpIn)
     flag:setModel(getAlliesFlagModel())
@@ -217,23 +232,36 @@ function createTP(tpIn,tpOut)
 	spawnCrate(tpOut,Vector3.new(0,0,0))
 end
 
-function createFloor(corner1, corner2)
-	local num = math.abs(corner1.x - corner2.x)
-	local num2 = math.abs(corner1.y - corner2.y)
+function createRamp(top, bottom)
+	local distance = distance(top,bottom)
+	local blocks = math.ceil(distance / 30)
+	local A = Vector3.new((top.x - bottom.x) / blocks, (top.y - bottom.y) / blocks, (top.z - bottom.z) / blocks)
+	local temp = gsc.vectortoangles(top - bottom)
+	local BA = Vector3.new(temp.z, temp.y + 90, temp.x);
+	for b = 0,blocks do
+		spawnCrate(bottom + (A * b), BA)
+	end
+end
 
-	local num3 = math.ceil(num / 50)
-	local num4 = math.ceil(num2 / 30)
-	local vector = corner2 - corner1;
-	local vector2 = Vector3.new(vector.x / num3, vector.x / num4, 0);
-	local entity = gsc.spawn("script_origin", Vector3.new((corner1.x + corner2.x) / 2, (corner1.y + corner2.y) / 2, corner1.z));
-	for i = 0,num3 - 1 do
-		for j = 0, num4 - 1 do
-			local entity2 = spawnCrate((corner1 + (Vector3.new(vector2.x, 0, 0) * i)) + (Vector3.new(0, vector2.y, 0) * j), Vector3.new(0, 0, 0));
-			entity2:enablelinkto()
-			entity2:linkto(entity)
+function createFloor(corner1, corner2)
+	local width = corner1.x - corner2.x
+	if width < 0 then width = width * -1 end
+	local length = corner1.y - corner2.y
+	if length < 0 then length = length * -1 end
+
+	local bwide = math.ceil(width / 50)
+	local blength = math.ceil(length / 30)
+	local C = corner2 - corner1;
+	local A = Vector3.new(C.x / bwide, C.y / blength, 0);
+	local center = gsc.spawn("script_origin", Vector3.new((corner1.x + corner2.x) / 2, (corner1.y + corner2.y) / 2, corner1.z));
+	for i = 0,bwide - 1 do
+		for j = 0, blength - 1 do
+			local crate = spawnCrate((corner1 + (Vector3.new(A.x, 0, 0) * i)) + (Vector3.new(0, A.y, 0) * j), Vector3.new(0, 0, 0));
+			crate:enablelinkto()
+			crate:linkto(center)
 		end
 	end
-	return entity
+	return center
 end
 
 function spawnWall(startp,endp)
@@ -271,25 +299,23 @@ function spawnWall(startp,endp)
 end
 
 function spawnCrate(origin,angles)
-	--[[
 	if _airdropCollision == nil then
-		local airDropCrates = gsc.getEntArray( "care_package", "targetname" );
-		local oldAirDropCrates = gsc.getEntArray( "airdrop_crate", "targetname" );
-		if #airDropCrates then
-			_airdropCollision = gsc.EntArray( airDropCrates[1].target, "targetname" )
-		else
-			_airdropCollision = gsc.EntArray( oldAirDropCrates[1].target, "targetname" )
-		end
-	end]]
+		_airdropCollision = gsc.getEnt( "pf2_auto1" , "targetname" )
+		-- I found it via cheat engine!
+	end
 
 	local crate = gsc.spawn("script_model",origin)
 	crate:setModel("com_plasticcase_friendly")
 	crate.angles = angles
 	crate:solid()
-	-- crate:clonebrushmodeltoscriptmodel(_airdropCollision)
+	crate:clonebrushmodeltoscriptmodel(_airdropCollision)
 
 	return crate
 end
+
+callbacks.postGameInit.add(function () 
+	print(gsc.getent("airdrop_crate","targetname"))
+end)
 
 loadMapedit()
 print("Simple Mapedit by GEEKiDoS")
