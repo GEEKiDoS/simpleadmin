@@ -246,6 +246,7 @@ function InitCmds()
 		addCommand("floor"		,"Create a floor"								, floor_f			,0 	)
 		addCommand("ramp"		,"Create a ramp"								, ramp_f			,0	)
 		addCommand("stair"		,"Create a stair"								, stair_f			,0	)
+		addCommand("elevator"	,"Create a elevator"							, elevator_f		,0 	)
 		addCommand("save"		,"Save the map to json file"					, savemapedit_f		,0	)
 	end
 end

@@ -4,6 +4,7 @@ cfloor = {}
 cwall = {}
 cramp = {}
 cstair = {}
+celevator = {}
 mapedit = {}
 
 -- commands
@@ -45,9 +46,9 @@ end
 function wall_f(sender,args) -- create a wall
 	if cwall["player"] == nil then
 		if isEmpty(args[2]) then
-			cwall["type"] = tonumber(args[2])
-		else
 			cwall["type"] = 1
+		else
+			cwall["type"] = tonumber(args[2])
 		end
 		cwall["player"] = sender
 		cwall["start"] = sender.origin
@@ -77,9 +78,9 @@ end
 function floor_f(sender,args) -- create a floor
 	if cfloor["player"] == nil then
 		if isEmpty(args[2]) then
-			cfloor["type"] = tonumber(args[2])
-		else
 			cfloor["type"] = 1
+		else
+			cfloor["type"] = tonumber(args[2])
 		end
 		cfloor["player"] = sender
 		cfloor["start"] = sender.origin
@@ -109,9 +110,9 @@ end
 function ramp_f(sender,args) -- create a ramp
 	if cramp["player"] == nil then
 		if isEmpty(args[2]) then
-			cramp["type"] = tonumber(args[2])
-		else
 			cramp["type"] = 1
+		else
+			cramp["type"] = tonumber(args[2])
 		end
 		cramp["player"] = sender
 		cramp["start"] = sender.origin
@@ -165,6 +166,50 @@ function stair_f(sender,args) -- create a stair
 	end
 end
 
+function elevator_f(sender,args)
+	if celevator["player"] == nil then
+		if isEmpty(args[4]) then
+			celevator["type"] = 1
+		else
+			celevator["type"] = tonumber(args[2])
+		end
+
+		if isEmpty(args[2]) then
+			celevator["time"] = 2
+		else
+			celevator["time"] = tonumber(args[3])
+		end
+
+		if isEmpty(args[3]) then
+			celevator["waittime"] = 2
+		else
+			celevator["waittime"] = tonumber(args[3])
+		end
+
+		local point = sender.origin
+		point.z = point.z - 10
+		celevator["floorstartp"] = point
+		sender:iPrintLnBold(("Floor of elevator start:(%f %f %f) Time:%ds Waittime:%ds"):format(sender.origin.x,sender.origin.y,sender.origin.z,celevator["time"],celevator["waittime"]))
+		celevator["player"] = sender
+	elseif celevator["player"] == sender then
+		if celevator["startp"] ~= nil then
+			createElevator(celevator["floor"],celevator["time"],celevator["startp"],sender.origin,celevator["waittime"])
+			sender:iPrintLnBold(("elevator end:(%f %f %f)"):format(sender.origin.x,sender.origin.y,sender.origin.z))
+			celevator["floor"] = nil
+			celevator["floorstartp"] = nil
+			celevator["player"] = nil
+			celevator["startp"] = nil
+			return
+		end
+		if celevator["floorstartp"] ~= nil then
+			celevator["floorendp"] = sender.tag_origin
+			celevator["startp"] = Vector3.new((celevator["floorstartp"].x + sender.origin.x) / 2,(celevator["floorstartp"].y + sender.origin.y) / 2,(celevator["floorstartp"].z + (sender.origin.z - 10)) / 2)
+			celevator["floor"] = createFloorset(celevator["floorstartp"],sender.origin,celevator["type"])
+			sender:iPrintLnBold(("Floor of elevator end:(%f %f %f)"):format(sender.origin.x,sender.origin.y,sender.origin.z))
+		end
+	end
+end
+
 function savemapedit_f(sender,args) -- save the map to json file
 	writeMapedit()
 	sender:iPrintLnBold("Map saved!")
@@ -201,6 +246,12 @@ function addMapedit(type,item)
 		end
 
 		table.insert( mapedit.mapedit.ramp , item)
+	elseif type == "stair" then
+		if mapedit.mapedit.stair == nil then
+			mapedit.mapedit.stair = {}
+		end
+
+		table.insert( mapedit.mapedit.stair , item)
 	elseif type == "stair" then
 		if mapedit.mapedit.stair == nil then
 			mapedit.mapedit.stair = {}
@@ -261,6 +312,18 @@ function loadMapedit()
 				createRamp(startp,endp,item["type"])
 			else
 				createRamp(startp,endp)
+			end
+		end
+	end
+
+	if mapedit.mapedit.stair ~= nil then
+		for i,item in pairs(mapedit.mapedit.stair) do
+			local startp = Vector3.new(item["startp"]["x"],item["startp"]["y"],item["startp"]["z"])
+			local endp = Vector3.new(item["endp"]["x"],item["endp"]["y"],item["endp"]["z"])
+			if item["type"] ~= nil then
+				createStair(startp,endp,item["type"])
+			else
+				createStair(startp,endp)
 			end
 		end
 	end
@@ -418,6 +481,56 @@ function createRamp(top, bottom,type)
 	end
 end
 
+function moveCrateset(crates,offsets,endp,time)
+	for i,crate in pairs(crates) do
+		crate:moveto(endp - offsets[i],time)
+	end
+end
+
+function createElevator(floor,time,startp,endp,waittime)
+	local stopTimer = 0
+	local dualWaittime = waittime * 2
+	local dualtime = time * 2
+
+	local offsets = {}
+	for i,crate in pairs(floor) do
+		offsets[i] = startp - crate.origin
+	end
+
+	callbacks.onInterval.add(1000,function()
+		stopTimer = stopTimer + 1
+		
+		if stopTimer == waittime then
+			moveCrateset(floor,offsets,endp,time)
+		elseif stopTimer == time + dualWaittime then
+			moveCrateset(floor,offsets,startp,time)
+		elseif stopTimer == dualtime + dualWaittime then
+			stopTimer = 0
+		end
+	end)
+end
+
+function createFloorset(corner1, corner2,type)
+	type = type or 1
+	local width = corner1.x - corner2.x
+	if width < 0 then width = width * -1 end
+	local length = corner1.y - corner2.y
+	if length < 0 then length = length * -1 end
+
+	local bwide = math.ceil(width / 60)
+	local blength = math.ceil(length / 30)
+	local C = corner2 - corner1;
+	local A = Vector3.new(C.x / bwide, C.y / blength, 0);
+	local crates = {}
+	for i = 0,bwide - 1 do
+		for j = 0, blength - 1 do
+			local crate = spawnCrate((corner1 + (Vector3.new(A.x, 0, 0) * i)) + (Vector3.new(0, A.y, 0) * j), Vector3.new(0, 0, 0),type);
+			table.insert(crates,crate)
+		end
+	end
+	return crates
+end
+
 function createFloor(corner1, corner2,type)
 	type = type or 1
 	local width = corner1.x - corner2.x
@@ -456,20 +569,24 @@ function spawnWall(startp,endp,type)
 	local angles = gsc.vectortoangles(v)
 	angles = Vector3.new(0,angles.y,90)
 	local entity = gsc.spawn("script_origin",Vector3.new((startp.x + endp.x) / 2, (startp.y + endp.y) / 2, (startp.z + endp.z) / 2))
+	entity:setContents(1)
 
 	for i = 0, numcrateZ - 1 do
 		local entity2 = spawnCrate((startp + Vector3.new(x, y, 10)) + (Vector3.new(0, 0, vector2.z) * i), angles,type)
 		entity2:enablelinkto()
 		entity2:linkto(entity)
+		entity2:setContents(1)
 		for j = 0, numcrateXY - 1 do
 			entity2 = spawnCrate(((startp + (Vector3.new(vector2.x, vector2.y, 0) * j)) + Vector3.new(0, 0, 10)) + (Vector3.new(0, 0, vector2.z) * i), angles,type);
 			entity2:enablelinkto()
 			entity2:linkto(entity)
+			entity2:setContents(1)
 		end
 
 		entity2 = spawnCrate((Vector3.new(endp.x, endp.x, startp.z) + Vector3.new(x * -1, y * -1, 10)) + (Vector3.new(0, 0, vector2.z) * i), angles,type);
 		entity2:enablelinkto()
 		entity2:linkto(entity)
+		entity2:setContents(1)
 	end
 
 	return entity;
