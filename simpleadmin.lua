@@ -591,6 +591,18 @@ function onLevelNotify(notify)
 				if isNewplayer then
 					players[p:getguid()] = { p.name }
 					onPlayerConnected(p)
+
+					local flag = true
+					for i,player in pairs(users.users) do
+						if player["guid"] == p:getguid() then
+							flag = false
+						end
+					end
+
+					if flag then
+						addUser(p)
+						writeUsers()
+					end
 				end
 			end
 		end)
